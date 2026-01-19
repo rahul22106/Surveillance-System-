@@ -1,0 +1,15 @@
+# Minimal requirements for CPU-only deployment
+flask
+opencv-python-headless
+numpy
+ultralytics
+torch
+torchvision
+pillow
+requests
+gunicorn
+
+
+twilio
+boto3
+python-telegram-bot
