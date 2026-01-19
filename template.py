@@ -21,6 +21,10 @@ list_of_files = [
     "streamlit_app.py",
     "requirements.txt",
     "setup.sh",
+    "config/config.yaml",
+    ".dockerignore",
+    "Dockerfile",
+    "docker-compose.yml",
     ".gitignore",
     "README.md"
 ]

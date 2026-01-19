@@ -42,7 +42,7 @@ class MultiObjectDetector:
                     'fall_threshold': 0.5,
                     'vehicle_threshold': 0.5,
                     'alert_cooldown': 30,
-                    'model_size': 'n',  # nano - smallest, fastest
+                    'model_size': 'n', 
                     'enable_alerts': True
                 }
         except Exception as e:
