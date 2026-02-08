@@ -1,0 +1,14 @@
+{
+    "fire_threshold": 0.4,
+    "fall_threshold": 0.5,
+    "vehicle_threshold": 0.5,
+    "alert_cooldown": 30,
+    "model_size": "n",
+    "enable_alerts": true,
+    "video_settings": {
+        "width": 640,
+        "height": 480,
+        "fps": 15
+    }
+}
+

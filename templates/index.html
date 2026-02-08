@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Multi-Object Detection System</title>
+    
+    <!-- Mobile-optimized -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 10px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+        
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            padding: 20px;
+            background: #f8f9fa;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .stat-card .icon {
+            font-size: 30px;
+            margin-bottom: 10px;
+        }
+        
+        .stat-card .label {
+            font-size: 12px;
+            color: #6c757d;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+        
+        .stat-card .value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .video-section {
+            padding: 20px;
+        }
+        
+        .video-container {
+            position: relative;
+            width: 100%;
+            padding-bottom: 56.25%; /* 16:9 aspect ratio */
+            background: #000;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .video-container img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+        
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            padding: 20px;
+            justify-content: center;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 25px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn:active {
+            transform: scale(0.95);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, #56ab2f 0%, #a8e063 100%);
+            color: white;
+        }
+        
+        .btn-danger {
+            background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
+            color: white;
+        }
+        
+        .btn-warning {
+            background: linear-gradient(135deg, #f2994a 0%, #f2c94c 100%);
+            color: white;
+        }
+        
+        .upload-section {
+            padding: 20px;
+            background: #f8f9fa;
+        }
+        
+        .upload-area {
+            border: 3px dashed #667eea;
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .upload-area:hover {
+            background: #f0f0ff;
+            border-color: #764ba2;
+        }
+        
+        .upload-area input[type="file"] {
+            display: none;
+        }
+        
+        .detections-list {
+            padding: 20px;
+        }
+        
+        .detection-item {
+            background: white;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .detection-item.fire {
+            border-left-color: #ff6b6b;
+        }
+        
+        .detection-item.fall {
+            border-left-color: #ffa500;
+        }
+        
+        .detection-item.vehicle {
+            border-left-color: #51cf66;
+        }
+        
+        .detection-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .detection-type {
+            font-weight: bold;
+            font-size: 16px;
+            text-transform: uppercase;
+        }
+        
+        .confidence-badge {
+            background: #667eea;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 12px;
+        }
+        
+        .alert-badge {
+            background: #ff6b6b;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 12px;
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .status-bar {
+            background: #28a745;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            font-size: 14px;
+        }
+        
+        .status-bar.offline {
+            background: #dc3545;
+        }
+        
+        .tabs {
+            display: flex;
+            background: #f8f9fa;
+            padding: 0 20px;
+            border-bottom: 2px solid #e9ecef;
+        }
+        
+        .tab {
+            padding: 15px 20px;
+            cursor: pointer;
+            border: none;
+            background: none;
+            font-size: 14px;
+            font-weight: 600;
+            color: #6c757d;
+            transition: all 0.3s;
+        }
+        
+        .tab.active {
+            color: #667eea;
+            border-bottom: 3px solid #667eea;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 20px;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+                padding: 15px;
+            }
+            
+            .stat-card {
+                padding: 10px;
+            }
+            
+            .stat-card .value {
+                font-size: 20px;
+            }
+            
+            .btn {
+                padding: 10px 16px;
+                font-size: 13px;
+            }
+            
+            .controls {
+                padding: 15px;
+            }
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>🔥 Multi-Object Detection System</h1>
+            <p>Fire • Fall • Vehicle Detection with Real-time Alerts</p>
+        </div>
+        
+        <!-- Status Bar -->
+        <div class="status-bar" id="statusBar">
+            ● System Online
+        </div>
+        
+        <!-- Statistics -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="icon">🔥</div>
+                <div class="label">Fire</div>
+                <div class="value" id="fireCount">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="icon">🤕</div>
+                <div class="label">Falls</div>
+                <div class="value" id="fallCount">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="icon">🚗</div>
+                <div class="label">Vehicles</div>
+                <div class="value" id="vehicleCount">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="icon">📊</div>
+                <div class="label">Total</div>
+                <div class="value" id="totalCount">0</div>
+            </div>
+        </div>
+        
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('live')">📹 Live Camera</button>
+            <button class="tab" onclick="switchTab('upload')">📤 Upload Image</button>
+            <button class="tab" onclick="switchTab('alerts')">🔔 Alerts</button>
+        </div>
+        
+        <!-- Tab Contents -->
+        
+        <!-- Live Camera Tab -->
+        <div id="liveTab" class="tab-content active">
+            <div class="video-section">
+                <div class="video-container">
+                    <img id="videoFeed" src="/video_feed" alt="Live Feed" onerror="handleVideoError()">
+                </div>
+            </div>
+            
+            <div class="controls">
+                <button class="btn btn-success" onclick="startCamera()">
+                    <span>▶</span> Start Camera
+                </button>
+                <button class="btn btn-danger" onclick="stopCamera()">
+                    <span>⏹</span> Stop Camera
+                </button>
+                <button class="btn btn-warning" onclick="toggleDetection()">
+                    <span>🎯</span> Toggle Detection
+                </button>
+                <button class="btn btn-primary" onclick="refreshStats()">
+                    <span>🔄</span> Refresh
+                </button>
+            </div>
+            
+            <div class="detections-list" id="detectionsList">
+                <h3 style="margin-bottom: 15px; color: #333;">Recent Detections</h3>
+                <p style="color: #6c757d;">No detections yet. Start camera to begin.</p>
+            </div>
+        </div>
+        
+        <!-- Upload Image Tab -->
+        <div id="uploadTab" class="tab-content">
+            <div class="upload-section">
+                <div class="upload-area" onclick="document.getElementById('fileInput').click()">
+                    <input type="file" id="fileInput" accept="image/*" onchange="uploadImage(this)">
+                    <div style="font-size: 48px; margin-bottom: 15px;">📷</div>
+                    <h3>Click to Upload Image</h3>
+                    <p style="color: #6c757d; margin-top: 10px;">or drag and drop</p>
+                </div>
+                
+                <div id="uploadResult" style="margin-top: 20px; display: none;">
+                    <h3 style="margin-bottom: 15px;">Detection Result</h3>
+                    <img id="resultImage" style="width: 100%; border-radius: 10px;">
+                    <div id="uploadDetections"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Alerts Tab -->
+        <div id="alertsTab" class="tab-content">
+            <div class="detections-list" id="alertHistory">
+                <h3 style="margin-bottom: 15px; color: #333;">Alert History</h3>
+                <p style="color: #6c757d;">Loading alerts...</p>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let detectionEnabled = true;
+        
+        function switchTab(tab) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            
+            // Show selected tab
+            if (tab === 'live') {
+                document.getElementById('liveTab').classList.add('active');
+                document.querySelectorAll('.tab')[0].classList.add('active');
+            } else if (tab === 'upload') {
+                document.getElementById('uploadTab').classList.add('active');
+                document.querySelectorAll('.tab')[1].classList.add('active');
+            } else if (tab === 'alerts') {
+                document.getElementById('alertsTab').classList.add('active');
+                document.querySelectorAll('.tab')[2].classList.add('active');
+                loadAlertHistory();
+            }
+        }
+        
+        async function startCamera() {
+            try {
+                const response = await fetch('/api/start_camera', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'}
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('statusBar').textContent = '● Camera Started';
+                    document.getElementById('statusBar').classList.remove('offline');
+                    document.getElementById('videoFeed').src = '/video_feed?' + new Date().getTime();
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+        
+        async function stopCamera() {
+            try {
+                const response = await fetch('/api/stop_camera', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'}
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('statusBar').textContent = '● Camera Stopped';
+                    document.getElementById('statusBar').classList.add('offline');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+        
+        async function toggleDetection() {
+            try {
+                const response = await fetch('/api/toggle_detection', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'}
+                });
+                const data = await response.json();
+                
+                detectionEnabled = data.detection_enabled;
+                const status = detectionEnabled ? 'ON' : 'OFF';
+                alert(`Detection ${status}`);
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+        
+        async function refreshStats() {
+            try {
+                const response = await fetch('/api/statistics');
+                const data = await response.json();
+                
+                document.getElementById('fireCount').textContent = data.fire_detections || 0;
+                document.getElementById('fallCount').textContent = data.fall_detections || 0;
+                document.getElementById('vehicleCount').textContent = data.vehicle_detections || 0;
+                document.getElementById('totalCount').textContent = data.total_detections || 0;
+                
+                // Also refresh detections
+                const detResponse = await fetch('/api/detections');
+                const detData = await detResponse.json();
+                
+                updateDetectionsList(detData.detections);
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+        
+        function updateDetectionsList(detections) {
+            const list = document.getElementById('detectionsList');
+            
+            if (!detections || detections.length === 0) {
+                list.innerHTML = '<h3 style="margin-bottom: 15px; color: #333;">Recent Detections</h3><p style="color: #6c757d;">No detections yet.</p>';
+                return;
+            }
+            
+            let html = '<h3 style="margin-bottom: 15px; color: #333;">Recent Detections</h3>';
+            
+            detections.forEach(det => {
+                html += `
+                    <div class="detection-item ${det.type}">
+                        <div class="detection-header">
+                            <span class="detection-type">${det.type}: ${det.class}</span>
+                            <span class="confidence-badge">${(det.confidence * 100).toFixed(1)}%</span>
+                        </div>
+                        ${det.alert_required ? '<span class="alert-badge">🚨 ALERT SENT</span>' : ''}
+                        <div style="font-size: 12px; color: #6c757d; margin-top: 5px;">
+                            BBox: [${det.bbox.join(', ')}]
+                        </div>
+                    </div>
+                `;
+            });
+            
+            list.innerHTML = html;
+        }
+        
+        async function uploadImage(input) {
+            if (!input.files || !input.files[0]) return;
+            
+            const formData = new FormData();
+            formData.append('file', input.files[0]);
+            
+            try {
+                const response = await fetch('/api/upload_image', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('uploadResult').style.display = 'block';
+                    document.getElementById('resultImage').src = 'data:image/jpeg;base64,' + data.result_image;
+                    
+                    let html = '<div style="margin-top: 15px;">';
+                    data.detections.forEach(det => {
+                        html += `
+                            <div class="detection-item ${det.type}">
+                                <div class="detection-header">
+                                    <span class="detection-type">${det.type}: ${det.class}</span>
+                                    <span class="confidence-badge">${(det.confidence * 100).toFixed(1)}%</span>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    html += '</div>';
+                    
+                    document.getElementById('uploadDetections').innerHTML = html;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Upload failed: ' + error.message);
+            }
+        }
+        
+        async function loadAlertHistory() {
+            try {
+                const response = await fetch('/api/alert_history');
+                const data = await response.json();
+                
+                const container = document.getElementById('alertHistory');
+                
+                if (!data.alerts || data.alerts.length === 0) {
+                    container.innerHTML = '<h3 style="margin-bottom: 15px; color: #333;">Alert History</h3><p style="color: #6c757d;">No alerts yet.</p>';
+                    return;
+                }
+                
+                let html = '<h3 style="margin-bottom: 15px; color: #333;">Alert History</h3>';
+                
+                data.alerts.reverse().forEach(alert => {
+                    html += `
+                        <div class="detection-item ${alert.type}">
+                            <div class="detection-header">
+                                <span class="detection-type">🚨 ${alert.type.toUpperCase()}</span>
+                                <span class="alert-badge">ALERT</span>
+                            </div>
+                            <div style="margin-top: 10px; font-size: 14px;">
+                                <div>Confidence: ${(alert.confidence * 100).toFixed(1)}%</div>
+                                <div style="color: #6c757d; font-size: 12px; margin-top: 5px;">
+                                    ${new Date(alert.timestamp).toLocaleString()}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                container.innerHTML = html;
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+        
+        function handleVideoError() {
+            document.getElementById('statusBar').textContent = '● Camera Not Available';
+            document.getElementById('statusBar').classList.add('offline');
+        }
+        
+        // Auto-refresh stats every 3 seconds
+        setInterval(refreshStats, 3000);
+        
+        // Load initial stats
+        refreshStats();
+    </script>
+</body>
+</html>
